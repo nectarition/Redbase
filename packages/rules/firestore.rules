@@ -2,10 +2,16 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOrganizationMember(userId, organization) {
+      return exists(/$(organization)/users/$(userId));
+    }
+
     match /tickets/{ticketId} {
-      allow read: if request.auth.uid != null;
+      allow read: if request.auth.uid != null
+        && isOrganizationMember(request.auth.uid, resource.data.organization);
       allow write: if request.auth.uid != null;
     }
+    
     match /ticketTags/{ticketTagId} {
       allow read: if request.auth.uid != null;
       allow write: if request.auth.uid != null;
