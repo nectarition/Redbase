@@ -43,7 +43,7 @@ export type TicketDbModel = TicketDocument & {
   project: DocumentReference<ProjectDbModel>
 }
 
-export type TicketStatusType = 'new' | 'in-progress' | 'closed'
+export type TicketStatusType = 'new' | 'in-progress' | 'completed' | 'omitted'
 
 type TicketTagDocument = {
   id: string

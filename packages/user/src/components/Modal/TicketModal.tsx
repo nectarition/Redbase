@@ -121,7 +121,7 @@ const Container = styled.div`
 const SectionTitle = styled.div`
   margin-bottom: 2px;
   font-size: 0.9em;
-  color: #808080;
+  color: #909090;
 `
 const Section = styled.div`
   margin-bottom: 10px;

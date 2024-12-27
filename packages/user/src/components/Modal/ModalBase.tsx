@@ -34,11 +34,13 @@ const ModalBase: React.FC<ModalControlProps> = props => {
     <Container>
       <TitleWrap>
         <Title>{props.modalProps.title}</Title>
-        <Close>
-          <CloseButton onClick={props.handleCancel}>
-            <PiX />
-          </CloseButton>
-        </Close>
+        {props.modalProps.isShowCloseButton && (
+          <Close>
+            <CloseButton onClick={props.handleCancel}>
+              <PiX />
+            </CloseButton>
+          </Close>
+        )}
       </TitleWrap>
       <Body>
         {props.modalProps.children}

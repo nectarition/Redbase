@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
+import TicketCreateModal from '../components/Modal/TicketCreateModal'
 import TicketModal from '../components/Modal/TicketModal'
 import { ModalContext, ModalProps } from '../providers/ModalProvider'
 import type { TicketAppModel } from 'redbase'
@@ -7,6 +8,7 @@ import type { TicketAppModel } from 'redbase'
 interface IUseModal {
   showModalAsync: (props: ModalProps) => Promise<void>
   showTicketModalAsync: (ticket: TicketAppModel, onUpdate: (newTicket: TicketAppModel) => void) => Promise<void>
+  showCreateTicketModalAsync: (projectId: string) => Promise<TicketAppModel>
 }
 
 const useModal = (): IUseModal => {
@@ -28,17 +30,32 @@ const useModal = (): IUseModal => {
       type: 'dialog',
       isUsedCloseByKeyboard: false,
       isUsedCloseByClickOutside: false,
-      cancelActionAsync: async () => {
-        if (!confirm('ダイアログを閉じますか？')) {
-          throw new Error('Canceled')
-        }
-      }
+      isShowCloseButton: true
+    })
+  }
+
+  const showCreateTicketModalAsync = async (projectId: string) => {
+    return new Promise<TicketAppModel>((resolve, reject) => {
+      showModalAsync({
+        title: 'チケット作成',
+        children: (
+          <TicketCreateModal
+            projectId={projectId}
+            reject={reject}
+            resolve={resolve} />
+        ),
+        type: 'dialog',
+        isUsedCloseByKeyboard: false,
+        isUsedCloseByClickOutside: false,
+        isShowCloseButton: true
+      })
     })
   }
 
   return {
     showModalAsync,
-    showTicketModalAsync
+    showTicketModalAsync,
+    showCreateTicketModalAsync
   }
 }
 

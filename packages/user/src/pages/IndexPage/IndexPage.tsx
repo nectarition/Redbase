@@ -5,18 +5,20 @@ import FormInput from '../../components/Form/FormInput'
 import FormItem from '../../components/Form/FormItem'
 import FormLabel from '../../components/Form/FormLabel'
 import FormSection from '../../components/Form/FormSection'
+import FormSelect from '../../components/Form/FormSelect'
 import { ticketStatusTypes } from '../../helpers/statusHelper'
 import useFirebase from '../../hooks/useFirebase'
 import useModal from '../../hooks/useModal'
+import useProject from '../../hooks/useProject'
 import useTicket from '../../hooks/useTicket'
 import DefaultLayout from '../../layouts/DefaultLayout/DefaultLayout'
-import type { TicketCreatePayload } from '../../@types'
 import type { TicketAppModel, TicketTagAppModel } from 'redbase'
 
 const IndexPage: React.FC = () => {
   const { user, loginByEmailAsync, logoutAsync } = useFirebase()
-  const { getTicketTagAsync, getTicketAsync, getTicketsByProjectIdAsync, createTicketAsync } = useTicket()
-  const { showTicketModalAsync } = useModal()
+  const { getTicketTagAsync, getTicketAsync, getTicketsByProjectIdAsync } = useTicket()
+  const { getMyProjectIdsAsync } = useProject()
+  const { showModalAsync, showTicketModalAsync, showCreateTicketModalAsync } = useModal()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,6 +28,7 @@ const IndexPage: React.FC = () => {
   const [ticket, setTicket] = useState<TicketAppModel>()
 
   const [projectId, setProjectId] = useState('')
+  const [projectIds, setProjectIds] = useState<string[]>()
   const [tickets, setTickets] = useState<TicketAppModel[]>()
 
   const handleLogin = useCallback(() => {
@@ -48,13 +51,6 @@ const IndexPage: React.FC = () => {
       .catch(err => { throw err })
   }, [neko])
 
-  const handleGetTickets = useCallback(() => {
-    if (!projectId) return
-    getTicketsByProjectIdAsync(projectId)
-      .then(setTickets)
-      .catch(err => { throw err })
-  }, [projectId])
-
   const onTicketUpdate = useCallback((newTicket: TicketAppModel) => {
     setTickets(s => s?.map(ticket => ticket.id === newTicket.id ? newTicket : ticket))
   }, [])
@@ -66,15 +62,23 @@ const IndexPage: React.FC = () => {
   }, [])
 
   const handleCreateTicket = useCallback(() => {
-    const ticket: TicketCreatePayload = {
-      projectId: 'hello-world',
-      title: 'New Ticket',
-      description: 'This is a new ticket.'
-    }
-    createTicketAsync(ticket)
-      .then(() => alert('Created'))
+    if (!projectId) return
+    showCreateTicketModalAsync(projectId)
+      .then(ticket => {
+        setTickets(s => s && ([...s, ticket]))
+        showModalAsync({
+          type: 'alert',
+          title: 'チケット作成',
+          children: (
+            <div>
+              <p>チケットを作成しました。</p>
+              <p>タグ: {ticket.tag}</p>
+            </div>
+          )
+        })
+      })
       .catch(err => { throw err })
-  }, [])
+  }, [projectId])
 
   useEffect(() => {
     if (!ticketTag) return
@@ -82,6 +86,21 @@ const IndexPage: React.FC = () => {
       .then(setTicket)
       .catch(err => { throw err })
   }, [ticketTag])
+
+  useEffect(() => {
+    getMyProjectIdsAsync()
+      .then(setProjectIds)
+      .catch(err => { throw err })
+  }, [getMyProjectIdsAsync])
+
+  useEffect(() => {
+    setTickets([])
+    if (!projectId) return
+
+    getTicketsByProjectIdAsync(projectId)
+      .then(setTickets)
+      .catch(err => { throw err })
+  }, [projectId])
 
   return (
     <DefaultLayout title="Index Page">
@@ -91,7 +110,9 @@ const IndexPage: React.FC = () => {
           ? (
             <FormSection>
               <FormItem>
-                {user.email}
+                <p>
+                  {user.email}
+                </p>
               </FormItem>
               <FormItem $inlined>
                 <FormButton onClick={handleLogout}>
@@ -147,19 +168,27 @@ const IndexPage: React.FC = () => {
         <FormSection>
           <FormItem>
             <FormLabel>プロジェクトID</FormLabel>
-            <FormInput
+            <FormSelect
               onChange={e => setProjectId(e.target.value)}
-              placeholder="プロジェクトID"
-              value={projectId} />
-          </FormItem>
-          <FormItem $inlined>
-            <FormButton onClick={handleGetTickets}>プロジェクト設定</FormButton>
+              value={projectId}>
+              <option value="">選択してください</option>
+              {projectIds?.map(projectId => (
+                <option
+                  key={projectId}
+                  value={projectId}>{projectId}
+                </option>
+              ))}
+            </FormSelect>
           </FormItem>
         </FormSection>
 
         <FormSection>
           <FormItem $inlined>
-            <FormButton onClick={handleCreateTicket}>チケット作成</FormButton>
+            <FormButton
+              disabled={!projectId}
+              onClick={handleCreateTicket}>
+              チケット作成
+            </FormButton>
           </FormItem>
         </FormSection>
 

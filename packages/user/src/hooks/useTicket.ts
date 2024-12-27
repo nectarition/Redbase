@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { collection, doc, getDoc, getDocs, query, runTransaction, serverTimestamp, setDoc, Timestamp, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, runTransaction, serverTimestamp, Timestamp, where } from 'firebase/firestore'
 import { TicketAppModel, TicketDbModel, TicketTagAppModel } from 'redbase'
 import { TicketCreatePayload } from '../@types'
 import { nextTicketTagConverter, projectConverter, ticketConverter, ticketTagConverter } from '../libs/converters'
@@ -9,7 +9,7 @@ interface IUseTicket {
   getTicketAsync: (ticketId: string) => Promise<TicketAppModel>
   getTicketTagAsync: (ticketTagId: string) => Promise<TicketTagAppModel>
   getTicketsByProjectIdAsync: (projectId: string) => Promise<TicketAppModel[]>
-  createTicketAsync: (payload: TicketCreatePayload) => Promise<void>
+  createTicketAsync: (payload: TicketCreatePayload) => Promise<TicketAppModel>
   updateTicketAsync: (ticket: TicketAppModel) => Promise<TicketAppModel>
 }
 
@@ -101,6 +101,19 @@ export const useTicket = (): IUseTicket => {
         }
         tx.set(ticketRef, newTicket)
       })
+
+      const ticketDoc = await getDoc(ticketRef)
+      const ticket = ticketDoc.data()
+      if (!ticket) {
+        throw new Error('Failed to create ticket')
+      }
+
+      return {
+        ...ticket,
+        projectId: ticket.project.id,
+        createdAt: (ticket.createdAt as Timestamp).toDate(),
+        updatedAt: (ticket.updatedAt as Timestamp).toDate()
+      }
     }, [])
 
   const updateTicketAsync =

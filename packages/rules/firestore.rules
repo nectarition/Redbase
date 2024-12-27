@@ -11,6 +11,14 @@ service cloud.firestore {
       return exists(/$(organizationRef)/users/$(userId));
     }
 
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+
+      match /projects/{userId} {
+        allow read: if request.auth.uid == userId;
+      }
+    }
+
     match /tickets/{ticketId} {
       allow read: if isProjectMember(request.auth.uid, resource.data.project);
       allow create: if isProjectMember(request.auth.uid, request.resource.data.project);

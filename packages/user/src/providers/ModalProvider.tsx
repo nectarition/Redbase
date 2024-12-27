@@ -8,6 +8,7 @@ export interface ModalProps {
   children: React.ReactNode
   isUsedCloseByKeyboard?: boolean
   isUsedCloseByClickOutside?: boolean
+  isShowCloseButton?: boolean
   actionAsync?: () => Promise<void>
   cancelActionAsync?: () => Promise<void>
 }
