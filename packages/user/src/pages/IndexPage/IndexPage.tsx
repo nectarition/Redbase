@@ -5,16 +5,17 @@ import FormInput from '../../components/Form/FormInput'
 import FormItem from '../../components/Form/FormItem'
 import FormLabel from '../../components/Form/FormLabel'
 import FormSection from '../../components/Form/FormSection'
-import { convertStatus } from '../../helpers/statusHelper'
+import { ticketStatusTypes } from '../../helpers/statusHelper'
 import useFirebase from '../../hooks/useFirebase'
 import useModal from '../../hooks/useModal'
 import useTicket from '../../hooks/useTicket'
 import DefaultLayout from '../../layouts/DefaultLayout/DefaultLayout'
+import type { TicketCreatePayload } from '../../@types'
 import type { TicketAppModel, TicketTagAppModel } from 'redbase'
 
 const IndexPage: React.FC = () => {
   const { user, loginByEmailAsync, logoutAsync } = useFirebase()
-  const { getTicketTagAsync, getTicketAsync, getTicketsByProjectIdAsync } = useTicket()
+  const { getTicketTagAsync, getTicketAsync, getTicketsByProjectIdAsync, createTicketAsync } = useTicket()
   const { showTicketModalAsync } = useModal()
 
   const [email, setEmail] = useState('')
@@ -64,9 +65,20 @@ const IndexPage: React.FC = () => {
       .catch(err => { throw err })
   }, [])
 
+  const handleCreateTicket = useCallback(() => {
+    const ticket: TicketCreatePayload = {
+      projectId: 'hello-world',
+      title: 'New Ticket',
+      description: 'This is a new ticket.'
+    }
+    createTicketAsync(ticket)
+      .then(() => alert('Created'))
+      .catch(err => { throw err })
+  }, [])
+
   useEffect(() => {
     if (!ticketTag) return
-    getTicketAsync(ticketTag.ticket.id)
+    getTicketAsync(ticketTag.ticketId)
       .then(setTicket)
       .catch(err => { throw err })
   }, [ticketTag])
@@ -145,23 +157,31 @@ const IndexPage: React.FC = () => {
           </FormItem>
         </FormSection>
 
+        <FormSection>
+          <FormItem $inlined>
+            <FormButton onClick={handleCreateTicket}>チケット作成</FormButton>
+          </FormItem>
+        </FormSection>
+
         <table className="touchable">
           <thead>
             <tr>
               <th>#</th>
               <th>ステータス</th>
               <th>タイトル</th>
+              <th>更新日時</th>
             </tr>
           </thead>
           <tbody>
-            {tickets?.sort((a, b) => parseInt(a.tag) - parseInt(b.tag))
+            {tickets?.sort((a, b) => parseInt(b.tag) - parseInt(a.tag))
               .map(ticket => (
                 <tr
                   key={ticket.id}
                   onClick={() => handleShowTicket(ticket)}>
                   <td>{ticket.tag}</td>
-                  <td>{convertStatus(ticket.status)}</td>
+                  <td>{ticketStatusTypes[ticket.status]}</td>
                   <td>{ticket.title}</td>
+                  <td>{ticket.updatedAt.toLocaleString()}</td>
                 </tr>
               ))}
           </tbody>

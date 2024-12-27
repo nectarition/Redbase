@@ -1,5 +1,17 @@
 import { FirestoreDataConverter, QueryDocumentSnapshot } from 'firebase/firestore'
-import { TicketDbModel, TicketTagDbModel } from 'redbase'
+import { NextTicketTag, ProjectDbModel, TicketDbModel, TicketTagDbModel } from 'redbase'
+
+export const projectConverter: FirestoreDataConverter<ProjectDbModel> = {
+  toFirestore: () => ({}),
+  fromFirestore: (snapshot: QueryDocumentSnapshot): ProjectDbModel => {
+    const data = snapshot.data()
+    return {
+      id: snapshot.id,
+      name: data.name,
+      organization: data.organization
+    }
+  }
+}
 
 export const ticketConverter: FirestoreDataConverter<TicketDbModel> = {
   toFirestore: (ticket: TicketDbModel) => ({
@@ -8,7 +20,9 @@ export const ticketConverter: FirestoreDataConverter<TicketDbModel> = {
     description: ticket.description,
     status: ticket.status,
     project: ticket.project,
-    revision: ticket.revision
+    revision: ticket.revision,
+    createdAt: ticket.createdAt,
+    updatedAt: ticket.updatedAt
   }),
   fromFirestore: (snapshot: QueryDocumentSnapshot): TicketDbModel => {
     const data = snapshot.data()
@@ -19,7 +33,9 @@ export const ticketConverter: FirestoreDataConverter<TicketDbModel> = {
       description: data.description,
       status: data.status,
       project: data.project,
-      revision: data.revision
+      revision: data.revision,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt
     }
   }
 }
@@ -31,6 +47,18 @@ export const ticketTagConverter: FirestoreDataConverter<TicketTagDbModel> = {
     return {
       id: snapshot.id,
       ticket: data.ticket
+    }
+  }
+}
+
+export const nextTicketTagConverter: FirestoreDataConverter<NextTicketTag> = {
+  toFirestore: (nextTicketTag: NextTicketTag) => ({
+    nextTag: nextTicketTag.nextTag
+  }),
+  fromFirestore: (snapshot: QueryDocumentSnapshot): NextTicketTag => {
+    const data = snapshot.data()
+    return {
+      nextTag: data.nextTag
     }
   }
 }

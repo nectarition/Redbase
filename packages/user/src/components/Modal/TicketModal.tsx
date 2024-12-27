@@ -1,14 +1,15 @@
 import { useCallback, useState } from 'react'
 import styled from 'styled-components'
 import ReactMarkdown from 'react-markdown'
-import { TicketAppModel } from 'redbase'
+import { TicketAppModel, TicketStatusType } from 'redbase'
 import remarkGfm from 'remark-gfm'
-import { convertStatus } from '../../helpers/statusHelper'
+import { ticketStatusTypes } from '../../helpers/statusHelper'
 import useTicket from '../../hooks/useTicket'
 import FormButton from '../Form/FormButton'
 import FormInput from '../Form/FormInput'
 import FormItem from '../Form/FormItem'
 import FormSection from '../Form/FormSection'
+import FormSelect from '../Form/FormSelect'
 import FormTextarea from '../Form/FormTextarea'
 
 interface Props {
@@ -45,7 +46,7 @@ const TicketModal: React.FC<Props> = props => {
           {isEdit
             ? (
               <FormInput
-                onChange={e => setEditableTicket({ ...editableTicket, title: e.target.value })}
+                onChange={e => setEditableTicket(s => ({ ...s, title: e.target.value }))}
                 value={editableTicket.title} />
             )
             : editableTicket.title}
@@ -53,7 +54,20 @@ const TicketModal: React.FC<Props> = props => {
       </Section>
       <Section>
         <SectionTitle>状態</SectionTitle>
-        {convertStatus(editableTicket.status)}
+        {isEdit
+          ? (
+            <FormSelect
+              onChange={e => setEditableTicket(s => ({ ...s, status: e.target.value as TicketStatusType }))}
+              value={editableTicket.status}>
+              {Object.entries(ticketStatusTypes).map(([key, value]) => (
+                <option
+                  key={key}
+                  value={key}>{value}
+                </option>
+              ))}
+            </FormSelect>
+          )
+          : ticketStatusTypes[editableTicket.status]}
       </Section>
       <Section>
         <SectionTitle>説明</SectionTitle>
@@ -61,7 +75,7 @@ const TicketModal: React.FC<Props> = props => {
           {isEdit
             ? (
               <FormTextarea
-                onChange={e => setEditableTicket({ ...editableTicket, description: e.target.value })}
+                onChange={e => setEditableTicket(s => ({ ...s, description: e.target.value }))}
                 value={editableTicket.description} />
             )
             : (
@@ -72,18 +86,24 @@ const TicketModal: React.FC<Props> = props => {
         </Description>
       </Section>
       <Section>
-        <SectionTitle>リビジョン</SectionTitle>
-        {editableTicket.revision}
+        <SectionTitle>更新日時</SectionTitle>
+        #{editableTicket.tag}-{editableTicket.revision}: {editableTicket.updatedAt.toLocaleString()}
+      </Section>
+      <Section>
+        <SectionTitle>作成日時</SectionTitle>
+        {editableTicket.createdAt.toLocaleString()}
       </Section>
       {!isEdit
         ? (
           <FormSection>
-            <FormButton onClick={() => setIsEdit(!isEdit)}>編集</FormButton>
+            <FormItem $inlined>
+              <FormButton onClick={() => setIsEdit(!isEdit)}>編集</FormButton>
+            </FormItem>
           </FormSection>
         )
         : (
           <FormSection>
-            <FormItem>
+            <FormItem $inlined>
               <FormButton onClick={handleUpdate}>更新</FormButton>
               <FormButton onClick={() => setIsEdit(!isEdit)}>キャンセル</FormButton>
             </FormItem>

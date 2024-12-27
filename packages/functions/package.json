@@ -1,0 +1,22 @@
+{
+  "name": "functions",
+  "version": "2024.12.0-beta",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "lint": "eslint",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "start": "npm run shell"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "lib/index.js"
+}

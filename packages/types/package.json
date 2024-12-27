@@ -1,0 +1,5 @@
+{
+  "name": "@types/redbase",
+  "version": "2024.12.0-beta",
+  "types": "src/index.d.ts"
+}

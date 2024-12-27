@@ -48,7 +48,7 @@ const ModalProvider: React.FC<Props> = props => {
           props.cancelActionAsync()
             .then(() => {
               setIsShow(false)
-              reject()
+              reject(new Error('Modal canceled'))
             })
           return
         }

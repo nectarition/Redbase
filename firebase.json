@@ -21,5 +21,18 @@
   ],
   "firestore": {
     "rules": "./packages/rules/firestore.rules"
+  },
+  "functions": {
+    "runtime": "nodejs20",
+    "source": "./packages/functions",
+    "predeploy": [
+      "yarn workspace functions build"
+    ],
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log"
+    ]
   }
 }
