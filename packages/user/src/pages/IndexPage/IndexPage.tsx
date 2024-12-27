@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
+import styled from 'styled-components'
+import FormButton from '../../components/Form/FormButton'
+import FormInput from '../../components/Form/FormInput'
+import FormItem from '../../components/Form/FormItem'
+import FormLabel from '../../components/Form/FormLabel'
+import FormSection from '../../components/Form/FormSection'
+import { convertStatus } from '../../helpers/statusHelper'
 import useFirebase from '../../hooks/useFirebase'
+import useModal from '../../hooks/useModal'
 import useTicket from '../../hooks/useTicket'
 import DefaultLayout from '../../layouts/DefaultLayout/DefaultLayout'
 import type { TicketAppModel, TicketTagAppModel } from 'redbase'
 
 const IndexPage: React.FC = () => {
   const { user, loginByEmailAsync, logoutAsync } = useFirebase()
-  const { getTicketTagAsync, getTicketAsync } = useTicket()
+  const { getTicketTagAsync, getTicketAsync, getTicketsByProjectIdAsync } = useTicket()
+  const { showTicketModalAsync } = useModal()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +23,9 @@ const IndexPage: React.FC = () => {
   const [neko, setNeko] = useState('')
   const [ticketTag, setTicketTag] = useState<TicketTagAppModel>()
   const [ticket, setTicket] = useState<TicketAppModel>()
+
+  const [projectId, setProjectId] = useState('')
+  const [tickets, setTickets] = useState<TicketAppModel[]>()
 
   const handleLogin = useCallback(() => {
     if (!email || !password) return
@@ -35,6 +47,23 @@ const IndexPage: React.FC = () => {
       .catch(err => { throw err })
   }, [neko])
 
+  const handleGetTickets = useCallback(() => {
+    if (!projectId) return
+    getTicketsByProjectIdAsync(projectId)
+      .then(setTickets)
+      .catch(err => { throw err })
+  }, [projectId])
+
+  const onTicketUpdate = useCallback((newTicket: TicketAppModel) => {
+    setTickets(s => s?.map(ticket => ticket.id === newTicket.id ? newTicket : ticket))
+  }, [])
+
+  const handleShowTicket = useCallback((ticket: TicketAppModel) => {
+    showTicketModalAsync(ticket, onTicketUpdate)
+      .then(() => alert('Updated'))
+      .catch(err => { throw err })
+  }, [])
+
   useEffect(() => {
     if (!ticketTag) return
     getTicketAsync(ticketTag.ticket.id)
@@ -44,32 +73,56 @@ const IndexPage: React.FC = () => {
 
   return (
     <DefaultLayout title="Index Page">
-      <h1>Index Page</h1>
-      {user
-        ? (
-          <p>
-            <>{user.email}</>
-            <button onClick={handleLogout}>Logout</button>
-          </p>
-        )
-        : (
-          <p>
-            <input
-              onChange={e => setEmail(e.target.value)}
-              type="email"
-              value={email} />
-            <input
-              onChange={e => setPassword(e.target.value)}
-              type="password"
-              value={password} />
-            <button onClick={handleLogin}>Login</button>
-          </p>
-        )}
-      <p>
-        <input
-          onChange={e => setNeko(e.target.value)}
-          value={neko} />
-        <button onClick={handleSearch}>Search</button>
+      <Container>
+        <h1>Redbase</h1>
+        {user
+          ? (
+            <FormSection>
+              <FormItem>
+                {user.email}
+              </FormItem>
+              <FormItem $inlined>
+                <FormButton onClick={handleLogout}>
+                  ログアウト
+                </FormButton>
+              </FormItem>
+            </FormSection>
+          )
+          : (
+            <FormSection>
+              <FormItem>
+                <FormLabel>メールアドレス</FormLabel>
+                <FormInput
+                  onChange={e => setEmail(e.target.value)}
+                  type="email"
+                  value={email} />
+              </FormItem>
+              <FormItem>
+                <FormLabel>パスワード</FormLabel>
+                <FormInput
+                  onChange={e => setPassword(e.target.value)}
+                  type="password"
+                  value={password} />
+              </FormItem>
+              <FormItem $inlined>
+                <FormButton onClick={handleLogin}>
+                  ログイン
+                </FormButton>
+              </FormItem>
+            </FormSection>
+          )}
+
+        <FormSection>
+          <FormItem>
+            <FormLabel>チケットID</FormLabel>
+            <FormInput
+              onChange={e => setNeko(e.target.value)}
+              value={neko} />
+          </FormItem>
+          <FormItem $inlined>
+            <FormButton onClick={handleSearch}>検索</FormButton>
+          </FormItem>
+        </FormSection>
 
         <ul>
           <li>チケット: #{ticket?.tag}</li>
@@ -78,10 +131,48 @@ const IndexPage: React.FC = () => {
           <li>内容: {ticket?.description}</li>
           <li>ステータス: {ticket?.status}</li>
         </ul>
-      </p>
 
+        <FormSection>
+          <FormItem>
+            <FormLabel>プロジェクトID</FormLabel>
+            <FormInput
+              onChange={e => setProjectId(e.target.value)}
+              placeholder="プロジェクトID"
+              value={projectId} />
+          </FormItem>
+          <FormItem $inlined>
+            <FormButton onClick={handleGetTickets}>プロジェクト設定</FormButton>
+          </FormItem>
+        </FormSection>
+
+        <table className="touchable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ステータス</th>
+              <th>タイトル</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tickets?.sort((a, b) => parseInt(a.tag) - parseInt(b.tag))
+              .map(ticket => (
+                <tr
+                  key={ticket.id}
+                  onClick={() => handleShowTicket(ticket)}>
+                  <td>{ticket.tag}</td>
+                  <td>{convertStatus(ticket.status)}</td>
+                  <td>{ticket.title}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </Container>
     </DefaultLayout>
   )
 }
 
 export default IndexPage
+
+const Container = styled.div`
+  padding: 20px;
+`
